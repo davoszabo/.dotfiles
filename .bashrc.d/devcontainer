@@ -16,7 +16,7 @@ devc() {
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -c|--config)
-       config_file="$2"
+        config_file="$2"
         shift 2
         ;;
       -r|--remove-existing-container)
