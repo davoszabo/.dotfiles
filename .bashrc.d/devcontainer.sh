@@ -54,3 +54,5 @@ devc() {
   eval "$cmd"
 }
 
+alias devcrun="devc up; devc exec bash"
+

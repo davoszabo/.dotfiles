@@ -19,7 +19,7 @@ return {
             -- ".gitignore",
             -- "package-lock.json",
           },
-          never_show = { ".git" },
+          -- never_show = { ".git" },
         },
       },
     })
