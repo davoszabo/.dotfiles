@@ -1,5 +1,8 @@
 export KUBE_EDITOR=nvim
 
+alias kubeswitch='~/.dotfiles/utils/kubeswitch.sh'
+alias ks='~/.dotfiles/utils/kubeswitch.sh'
+
 alias k='kubectl'
 alias kg='kubectl get'
 alias kd='kubectl describe'
