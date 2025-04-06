@@ -55,11 +55,11 @@ function merge_configs() {
     local config_files=()
     while IFS= read -r -d $'\0' file; do
         config_files+=("$file")
-    done < <(find "$folder_path" -type f -not -name "*.*" -not -name ".merged_config" -print0 2>/dev/null)
+    done < <(find "$folder_path" -type f -regex ".*\.\(yaml\|yml\)" -not -name ".merged_config" -print0 2>/dev/null)
     
     if [ ${#config_files[@]} -eq 0 ]; then
         echo "Error: No valid config files found in $folder_path" >&2
-        echo "Files must have no extensions (not matching *.*)" >&2
+        echo "Files must have the extensions: yaml|yml" >&2
         return 1
     fi
     
