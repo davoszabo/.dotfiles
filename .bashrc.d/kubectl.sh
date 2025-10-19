@@ -1,7 +1,12 @@
 export KUBE_EDITOR=nvim
 
+export KUBECTL_EXTERNAL_DIFF="colordiff -N -u"
+
 alias kubeswitch='~/.dotfiles/utils/kubeswitch.sh'
 alias ks='~/.dotfiles/utils/kubeswitch.sh'
+
+alias helmdiff='~/.dotfiles/utils/helmdiff.sh'
+alias hdiff='~/.dotfiles/utils/kubediff.sh'
 
 alias k='kubectl'
 alias kg='kubectl get'
@@ -10,7 +15,7 @@ alias kgpo='kubectl get pods'
 alias wkgpo='watch kubectl get pods'
 alias kgns='kubectl get namespaces'
 alias kgno='kubectl get nodes -o wide'
-alias kgc='kubectl config get-contexts'
+alias kgc='kubectl config get-contexts | grep -C 1 "*"'
 
 kcns() {
     kubectl config set-context --current --namespace="$1"
