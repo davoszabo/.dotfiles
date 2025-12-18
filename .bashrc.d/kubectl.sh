@@ -15,7 +15,9 @@ alias kgpo='kubectl get pods'
 alias wkgpo='watch kubectl get pods'
 alias kgns='kubectl get namespaces'
 alias kgno='kubectl get nodes -o wide'
-alias kgc='kubectl config get-contexts | grep -C 1 "*"'
+alias kgc="kubectl config get-contexts --no-headers \
+  | awk '\$1==\"*\" {printf \"%-30s %s\n\", \$2, \$NF}'"
+alias ka='cat <<EOF | kubectl apply -f -'
 
 kcns() {
     kubectl config set-context --current --namespace="$1"
