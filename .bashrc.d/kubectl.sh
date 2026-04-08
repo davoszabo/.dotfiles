@@ -19,6 +19,8 @@ alias kgc="kubectl config get-contexts --no-headers \
   | awk '\$1==\"*\" {printf \"%-30s %s\n\", \$2, \$NF}'"
 alias ka='cat <<EOF | kubectl apply -f -'
 
+alias k9s='k9s --logoless'
+
 kcns() {
     kubectl config set-context --current --namespace="$1"
 }
