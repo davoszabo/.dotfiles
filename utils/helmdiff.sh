@@ -3,17 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<EOF
-Usage: $0 DEPLOYMENT_NAME [OPTIONS]
+Usage: $0 [OPTIONS] RELEASE_NAME [CHART]
 
 Required:
-  DEPLOYMENT_NAME           The Helm release name (used by kubectl diff)
+  RELEASE_NAME              Helm release name (first positional argument)
   -f, --values FILE         Values file for the chart
 
 Optional:
-  -c, --chart-name NAME     Chart name (defaults to DEPLOYMENT_NAME); used for classic
-                            repos only, not for OCI (see below)
+  CHART                     Helm-style chart argument (second positional argument):
+                            - chart name (for classic repos)
+                            - "." or local chart path
+                            - full OCI reference (oci://registry/ns/chart)
+  -c, --chart-name NAME     Legacy chart name fallback when CHART positional arg is omitted
   -r, --repo URL            Classic Helm repo URL, or full OCI chart reference
-                            (oci://registry/namespace/chart)
+                            (oci://registry/namespace/chart) for backward compatibility
   -v, --version VERSION     Remote chart version
   -n, --namespace NAME      Kubernetes namespace for helm template and kubectl diff
                             (optional; omitted if not set)
@@ -21,31 +24,29 @@ Optional:
   -h, --help                Show this help
 
 Notes:
-  - If CHART_NAME is not specified, it is set to DEPLOYMENT_NAME.
+  - Preferred usage mirrors helm template:
+      $0 [flags] RELEASE_NAME CHART -f values.yaml
+  - If CHART is omitted, legacy fallback is used:
+    - with --repo (classic): CHART is --chart-name or RELEASE_NAME
+    - with --repo oci://... : CHART is that OCI reference
+    - without --repo        : CHART defaults to "."
   - VALUES_FILE is mandatory.
-  - Classic HTTP repos: pass -r with the index URL and -c with the chart name; Helm gets
-    --repo and the chart name as the chart argument.
-  - OCI registries: pass -r with the full oci://... chart reference (same form as
-    helm install/pull). Do not use --repo; -c is ignored for the chart path.
-  - --version is passed to helm template for both classic and OCI remotes.
+  - For classic repos, --repo is only used as Helm's --repo URL.
+  - For OCI charts, use CHART=oci://... (or legacy --repo oci://...).
+  - --version is passed to helm template for classic and OCI charts.
   - With -n/--namespace, helm template gets --namespace and kubectl diff gets -n.
 EOF
   exit 1
 }
-
-# Need at least DEPLOYMENT_NAME
-[[ $# -lt 1 ]] && usage
-
-DEPLOYMENT_NAME="$1"
-shift
 
 CHART_NAME=""
 VALUES_FILE=""
 REMOTE_REPO=""
 REMOTE_REPO_VERSION=""
 KUBE_NAMESPACE=""
+POSITIONAL_ARGS=()
 
-# Parse options
+# Parse options and positional args in any order.
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -c|--chart-name)
@@ -71,15 +72,36 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       usage
       ;;
+    --)
+      shift
+      while [[ $# -gt 0 ]]; do
+        POSITIONAL_ARGS+=("$1")
+        shift
+      done
+      ;;
     *)
-      echo "Unknown option: $1"
-      usage
+      if [[ "$1" == -* ]]; then
+        echo "Unknown option: $1"
+        usage
+      fi
+      POSITIONAL_ARGS+=("$1")
+      shift
       ;;
   esac
 done
 
-# Defaults
-CHART_NAME="${CHART_NAME:-$DEPLOYMENT_NAME}"
+# Need at least RELEASE_NAME positional argument.
+if [[ ${#POSITIONAL_ARGS[@]} -lt 1 ]]; then
+  echo "Error: RELEASE_NAME is required."
+  usage
+fi
+if [[ ${#POSITIONAL_ARGS[@]} -gt 2 ]]; then
+  echo "Error: Too many positional arguments."
+  usage
+fi
+
+DEPLOYMENT_NAME="${POSITIONAL_ARGS[0]}"
+CHART_INPUT="${POSITIONAL_ARGS[1]:-}"
 
 # Validate required arguments
 if [[ -z "$VALUES_FILE" ]]; then
@@ -87,19 +109,28 @@ if [[ -z "$VALUES_FILE" ]]; then
   usage
 fi
 
-# Build OPTIONS and chart path: classic repos use --repo + chart name; OCI uses the
-# full oci:// reference as the chart argument (no --repo).
+# Build Helm options and chart path.
 OPTIONS=()
-if [[ -n "$REMOTE_REPO" ]]; then
-  if [[ "$REMOTE_REPO" == oci://* ]]; then
-    CHART_PATH="$REMOTE_REPO"
-  else
-    CHART_PATH="$CHART_NAME"
-    OPTIONS+=(--repo "$REMOTE_REPO")
-  fi
+if [[ -n "$CHART_INPUT" ]]; then
+  CHART_PATH="$CHART_INPUT"
 else
-  CHART_PATH="."
+  if [[ -n "$REMOTE_REPO" ]]; then
+    if [[ "$REMOTE_REPO" == oci://* ]]; then
+      CHART_PATH="$REMOTE_REPO"
+    else
+      CHART_PATH="${CHART_NAME:-$DEPLOYMENT_NAME}"
+      OPTIONS+=(--repo "$REMOTE_REPO")
+    fi
+  else
+    CHART_PATH="."
+  fi
 fi
+
+# For classic repos, a provided --repo remains valid even when CHART is positional.
+if [[ -n "$CHART_INPUT" && -n "$REMOTE_REPO" && "$REMOTE_REPO" != oci://* ]]; then
+  OPTIONS+=(--repo "$REMOTE_REPO")
+fi
+
 if [[ -n "$REMOTE_REPO_VERSION" ]]; then
   OPTIONS+=(--version "$REMOTE_REPO_VERSION")
 fi
