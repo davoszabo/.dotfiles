@@ -19,7 +19,7 @@ function recursive_symlink() {
     if [ ! -z "$1" ]; then
         path="$1/*"
     fi
-    
+
     local fullpath="$DOTFILES_DIR/$path"
     echo "Full path to search: $fullpath"
 
