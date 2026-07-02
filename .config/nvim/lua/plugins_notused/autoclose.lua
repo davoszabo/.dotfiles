@@ -2,7 +2,7 @@ return {
     "m4xshen/autoclose.nvim",
     config = function()
       require("autoclose").setup({
-        enable = true,
+        enable = false,
         options = {
             disable_when_touch = true,
         },
@@ -13,8 +13,8 @@ return {
           [")"] = true,
           ["{"] = true,
           ["}"] = true,
-          ["\""] = true,
-          ["'"] = true,
+          ["\""] = false,
+          ["'"] = false,"''"
         },
       })
     end,
