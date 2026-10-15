@@ -32,9 +32,14 @@ local function get_visual_selection()
   return text:gsub('\n$', '')  -- remove trailing newline if any
 end
 
--- Helper: escape special characters for \V (very nomagic) – only \ and /
+-- Helper: escape search text for \V (very nomagic) – only \ and / are special, newlines become \n
 local function escape_for_regex(text)
-  return vim.fn.escape(text, '\\/')
+  return (vim.fn.escape(text, '\\/'):gsub('\n', '\\n'))
+end
+
+-- Helper: escape replacement text – \, /, & and ~ are special, newlines become \r
+local function escape_for_replace(text)
+  return (vim.fn.escape(text, '\\/&~'):gsub('\n', '\\r'))
 end
 
 -- Replace visual selection in current file
@@ -44,22 +49,31 @@ vim.keymap.set("v", "<leader>rr", function()
   local new = vim.fn.input("Replace with: ")
   if new == '' then return end  -- if user cancels, skip
   local old_esc = escape_for_regex(old)
-  local new_esc = escape_for_regex(new)
-  local cmd = string.format("%%s/\\V%s/%s/gc | update", old_esc, new_esc)
+  local new_esc = escape_for_replace(new)
+  local cmd = string.format("%%s/\\V%s/%s/gce | update", old_esc, new_esc)
   vim.cmd(cmd)
 end, { desc = "Replace visual selection in current file (confirm & save)" })
 
 -- Replace visual selection in ALL files in quickfix list
+-- If the quickfix list is empty, it is filled with a literal ripgrep search of the selection in cwd
 vim.keymap.set("v", "<leader>ra", function()
   local old = get_visual_selection()
   if old == '' then return end
+  if #vim.fn.getqflist() == 0 then
+    local lines = vim.fn.systemlist({ "rg", "--vimgrep", "--fixed-strings", "--multiline", "--", old })
+    if #lines == 0 then
+      vim.notify("No matches for selection in " .. vim.fn.getcwd(), vim.log.levels.WARN)
+      return
+    end
+    vim.fn.setqflist({}, " ", { lines = lines, efm = "%f:%l:%c:%m", title = "rg: " .. old })
+  end
   local new = vim.fn.input("Replace with: ")
   if new == '' then return end
   local old_esc = escape_for_regex(old)
-  local new_esc = escape_for_regex(new)
-  local cmd = string.format("cfdo %%s/\\V%s/%s/gc | update", old_esc, new_esc)
+  local new_esc = escape_for_replace(new)
+  local cmd = string.format("cfdo %%s/\\V%s/%s/gce | update", old_esc, new_esc)
   vim.cmd(cmd)
-end, { desc = "Replace visual selection across ALL files (quickfix, confirm & save)" })
+end, { desc = "Replace visual selection across ALL files (quickfix or rg, confirm & save)" })
 -- :Telescope live_grep, then Ctrl-q to put it in quickfix
 -- keymap.set("n", "<leader>ra", ":cdo %s/<C-r><C-w>/<C-r><C-w>/gc<Left><Left><Left>", { desc = "Replace all occurrences of word under cursor in ALL files" })
 
