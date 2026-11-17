@@ -1,5 +1,8 @@
 onboarding = false
 
+[ui]
+pane_gaps = false
+
 [ui.sound]
 enabled = true
 
