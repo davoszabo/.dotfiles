@@ -1,0 +1,38 @@
+onboarding = false
+
+[ui.sound]
+enabled = true
+
+[ui.toast]
+delivery = "herdr"
+
+# tmux-style keymap (mirrors ~/.tmux.conf)
+[keys]
+prefix = "ctrl+a"
+# tmux: bind | split-window -h / bind - split-window -v
+split_vertical = ["prefix+v", "prefix+|"]
+split_horizontal = "prefix+minus"
+# tmux: bind r source-file; herdr's resize mode moves to prefix+shift+r
+reload_config = "prefix+r"
+resize_mode = "prefix+shift+r"
+# tmux: bind -r h/j/k/l resize-pane 5 (repeat not available; one step per press)
+resize_pane_left = "prefix+h"
+resize_pane_down = "prefix+j"
+resize_pane_up = "prefix+k"
+resize_pane_right = "prefix+l"
+# focus moves to tmux default arrows + o
+focus_pane_left = "prefix+left"
+focus_pane_down = "prefix+down"
+focus_pane_up = "prefix+up"
+focus_pane_right = "prefix+right"
+cycle_pane_next = ["prefix+tab", "prefix+o"]
+# tmux defaults kept: d detach, comma rename window
+detach = ["prefix+q", "prefix+d"]
+rename_tab = ["prefix+shift+t", "prefix+comma"]
+# tmux: bind -n C-S-Left/Right swap-window
+move_tab_previous = "ctrl+shift+left"
+move_tab_next = "ctrl+shift+right"
+
+[theme]
+name = "vesper"
+auto_switch = false
