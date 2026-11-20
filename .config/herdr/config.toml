@@ -3,6 +3,15 @@ onboarding = false
 [ui]
 pane_gaps = false
 
+[ui.sidebar.agents]
+# Row 1: state icon + "workspace · agent"; row 2: tab name (e.g. "herdr-setup")
+rows = [["state_icon", "workspace", "agent"], [{ token = "tab", fg = "#9399b2" }]]
+row_gap = 1
+
+[ui.sidebar.spaces]
+# Workspace rows: state icon + name only (branch/git_status removed)
+rows = [["state_icon", "workspace"]]
+
 [ui.sound]
 enabled = true
 
